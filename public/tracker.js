@@ -17,16 +17,14 @@
     function getOrCreateVisitorID() {
         let visitorID = getCookie("visitor_id");
         if (!visitorID) {
-            // Generate new visitor ID if cookie doesn't exist
-            let today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
+            let today = new Date().toISOString().split("T")[0];
             visitorID = `v-${today}-${Math.random().toString(36).substr(2, 9)}`;
-            setCookie("visitor_id", visitorID, 1); // Store for 1 day (24 hours)
+            setCookie("visitor_id", visitorID, 1);
         }
         return visitorID;
     }
 
     async function sendVisitData() {
-        // Get the existing visitor ID or create one if not present
         let visitorID = getOrCreateVisitorID(); 
 
         try {
@@ -34,7 +32,6 @@
             let data = await response.json();
             let ip = data.ip;
 
-            // Send the tracking data to the backend
             await fetch("http://tracker.test/api/track", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -46,13 +43,9 @@
                     referrer: document.referrer || ""
                 })
             });
-
-            console.log("Tracking sent.");
-
-            // Set cookie to prevent further tracking today
-            setCookie("visited_today", "true", 1); // 1-day expiry
+            setCookie("visited_today", "true", 1);
         } catch (error) {
-            console.error("Tracking failed:", error);
+            
         }
     }
 
