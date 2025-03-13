@@ -58,6 +58,7 @@ class VisitController extends Controller
             'user_agent' => $request->input('user_agent'),
             'referrer'   => $request->input('referrer'),
             'visit_time' => now(),
+            'website_id' => $website->id,
         ]);
     
         return response()->json(['message' => 'Visit recorded successfully'], 201);
@@ -82,8 +83,7 @@ class VisitController extends Controller
                     DATE(visit_time) as date,
                     page_url,
                     COUNT(*) as visits,
-                    COUNT(DISTINCT visitor_id) as unique_visitors,
-                    AVG(TIMESTAMPDIFF(SECOND, visit_time, NOW())) as avg_time
+                    COUNT(DISTINCT visitor_id) as unique_visitors
                 ')
                 ->groupBy('date', 'page_url')
                 ->get();
@@ -94,7 +94,6 @@ class VisitController extends Controller
                     'page_url' => $visit->page_url,
                     'visits' => $visit->visits,
                     'unique_visitors' => $visit->unique_visitors,
-                    'avg_time' => gmdate("H:i:s", round($visit->avg_time ?? 0)),
                 ];
             });
         

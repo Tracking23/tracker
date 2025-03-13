@@ -12,7 +12,8 @@ class Visit extends Model
         'ip_address',
         'user_agent',
         'referrer',
-        'visit_time'
+        'visit_time',
+        'website_id'
     ];
 
     public function website()
