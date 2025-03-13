@@ -80,19 +80,15 @@ class VisitController extends Controller
             $visits = Visit::where('website_id', $request->website)
                 ->whereBetween('visit_time', [$startDate, $endDate])
                 ->selectRaw('
-                    DATE(visit_time) as date,
                     page_url,
-                    COUNT(*) as visits,
                     COUNT(DISTINCT visitor_id) as unique_visitors
                 ')
-                ->groupBy('date', 'page_url')
+                ->groupBy('page_url')
                 ->get();
         
             $data = $visits->map(function ($visit) {
                 return [
-                    'date' => $visit->date,
                     'page_url' => $visit->page_url,
-                    'visits' => $visit->visits,
                     'unique_visitors' => $visit->unique_visitors,
                 ];
             });

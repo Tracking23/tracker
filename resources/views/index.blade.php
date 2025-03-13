@@ -53,14 +53,12 @@
                         </div>
                     </div>
                 </div>
-
+                <button id="reloadButton" class="btn btn-primary mb-3">Reload Data</button>
                 <div class="table-responsive">
                     <table id="visitsTable" class="table table-striped">
                         <thead>
                             <tr>
-                                <th>Date</th>
                                 <th>Page URL</th>
-                                <th>Visits</th>
                                 <th>Unique Visitors</th>
                             </tr>
                         </thead>
@@ -87,23 +85,23 @@
                 pageLength: 10,
                 order: [[0, 'desc']]
             });
-
+    
             function fetchData() {
                 const dateRange = $('#daterange').val();
                 const website = $('#website-select').val();
-
+    
                 if (!website) {
                     alert('Please select a website');
                     return;
                 }
-
+    
                 table.clear().draw();
                 $('.card-body').addClass('opacity-50');
-
+    
                 const dates = dateRange.split(' - ');
                 const startDate = moment(dates[0], 'YYYY-MM-DD').format('YYYY-MM-DD');
                 const endDate = moment(dates[1], 'YYYY-MM-DD').format('YYYY-MM-DD');
-
+    
                 $.ajax({
                     url: '/api/website-analytics',
                     method: 'GET',
@@ -117,9 +115,7 @@
                         
                         response.forEach(function(row) {
                             table.row.add([
-                                row.date,
                                 row.page_url,
-                                row.visits,
                                 row.unique_visitors
                             ]);
                         });
@@ -135,7 +131,7 @@
                     }
                 });
             }
-
+    
             $('#daterange').daterangepicker({
                 startDate: moment().subtract(7, 'days'),
                 endDate: moment(),
@@ -151,16 +147,21 @@
                     'Last Month': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')]
                 }
             });
-
+    
             $('#daterange').on('apply.daterangepicker', function(ev, picker) {
                 fetchData();
             });
-
+    
             $('#website-select').on('change', function() {
                 fetchData();
             });
-
+    
+            // Reload Button functionality
+            $('#reloadButton').on('click', function() {
+                fetchData();
+            });
         });
     </script>
+    
 </body>
 </html>
