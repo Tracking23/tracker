@@ -23,10 +23,12 @@ class VisitController extends Controller
 
         $pageUrl = $request->input('page_url');
 
+        //**Check if the page URL has a scheme */
         if (!parse_url($pageUrl, PHP_URL_SCHEME)) {
             $pageUrl = 'http://' . $pageUrl;
         }
 
+        /**Get the base URL */
         $parsedUrl = parse_url($pageUrl);
         $baseUrl = $parsedUrl['scheme'] . '://' . $parsedUrl['host'];
 
@@ -36,12 +38,14 @@ class VisitController extends Controller
             return response()->json(['message' => 'Website not found'], 404);
         }
 
+        //**Check if the client ID matches the website's client ID */
         if($website->client_id != $request->input('client_id')){
             return response()->json(['message' => 'Client ID does not match'], 403);
         }
     
         $today = now()->toDateString();
     
+        /**Check if the visitor has already been recorded today */
         $existingVisit = Visit::where('visitor_id', $request->input('visitor_id'))
             ->where('page_url', $request->input('page_url'))
             ->whereDate('visit_time', $today)
@@ -77,6 +81,7 @@ class VisitController extends Controller
             $startDate = Carbon::parse($request->start_date)->startOfDay();
             $endDate = Carbon::parse($request->end_date)->endOfDay();
         
+            /**Get the unique visitors for each page URL */
             $visits = Visit::where('website_id', $request->website)
                 ->whereBetween('visit_time', [$startDate, $endDate])
                 ->selectRaw('
@@ -86,6 +91,7 @@ class VisitController extends Controller
                 ->groupBy('page_url')
                 ->get();
         
+            /**Format the response */
             $data = $visits->map(function ($visit) {
                 return [
                     'page_url' => $visit->page_url,
