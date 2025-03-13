@@ -10,4 +10,4 @@ Route::get('/user', function (Request $request) {
 })->middleware('auth:sanctum');
 
 Route::post('/track', [VisitController::class, 'track']);
-Route::get('/stats', [VisitController::class, 'stats']);
+Route::get('/website-analytics', [VisitController::class, 'getAnalytics']);

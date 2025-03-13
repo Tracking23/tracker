@@ -14,4 +14,9 @@ class Visit extends Model
         'referrer',
         'visit_time'
     ];
+
+    public function website()
+    {
+        return $this->belongsTo(Website::class);
+    }
 }

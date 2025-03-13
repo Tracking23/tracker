@@ -1,4 +1,7 @@
 (function () {
+    const scriptTag = document.getElementById('tracker_script');
+    const clientID = scriptTag ? scriptTag.getAttribute('data-client-id') : null;
+
     function getCookie(name) {
         const cookies = document.cookie.split('; ');
         for (let cookie of cookies) {
@@ -39,6 +42,7 @@
                     page_url: window.location.href,
                     ip_address: ip,
                     visitor_id: visitorID,
+                    client_id: clientID,
                     user_agent: navigator.userAgent,
                     referrer: document.referrer || ""
                 })

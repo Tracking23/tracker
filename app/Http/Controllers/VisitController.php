@@ -4,7 +4,10 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Visit;
+use App\Models\Website;
 use Illuminate\Support\Carbon;
+
+use Illuminate\Support\Facades\DB;
 
 class VisitController extends Controller
 {
@@ -15,7 +18,27 @@ class VisitController extends Controller
             'ip_address' => 'required|ip',
             'user_agent' => 'nullable|string',
             'referrer'   => 'nullable|string|max:255',
+            'client_id'   => 'required',
         ]);
+
+        $pageUrl = $request->input('page_url');
+
+        if (!parse_url($pageUrl, PHP_URL_SCHEME)) {
+            $pageUrl = 'http://' . $pageUrl;
+        }
+
+        $parsedUrl = parse_url($pageUrl);
+        $baseUrl = $parsedUrl['scheme'] . '://' . $parsedUrl['host'];
+
+        $website = Website::where('url', $baseUrl)->first();
+
+        if($website == null){
+            return response()->json(['message' => 'Website not found'], 404);
+        }
+
+        if($website->client_id != $request->input('client_id')){
+            return response()->json(['message' => 'Client ID does not match'], 403);
+        }
     
         $today = now()->toDateString();
     
@@ -39,21 +62,52 @@ class VisitController extends Controller
     
         return response()->json(['message' => 'Visit recorded successfully'], 201);
     }
-    
-    public function stats(Request $request)
+
+
+    public function getAnalytics(Request $request)
     {
         $request->validate([
-            'page' => 'required|string|max:255',
-            'from' => 'required|date',
-            'to'   => 'required|date|after_or_equal:from',
+            'start_date' => 'required',
+            'end_date' => 'required|after_or_equal:start_date',
+            'website' => 'required|integer|exists:websites,id',
         ]);
-
-        $visits = Visit::where('page_url', $request->input('page'))
-            ->whereDate('visit_time', '>=', $request->input('from'))
-            ->whereDate('visit_time', '<=', $request->input('to'))
-            ->distinct('visitor_id')
-            ->count();
-
-        return response()->json(['unique_visits' => $visits]);
+        
+        try {
+            $startDate = Carbon::parse($request->start_date)->startOfDay();
+            $endDate = Carbon::parse($request->end_date)->endOfDay();
+        
+            $visits = Visit::where('website_id', $request->website)
+                ->whereBetween('visit_time', [$startDate, $endDate])
+                ->selectRaw('
+                    DATE(visit_time) as date,
+                    page_url,
+                    COUNT(*) as visits,
+                    COUNT(DISTINCT visitor_id) as unique_visitors,
+                    AVG(TIMESTAMPDIFF(SECOND, visit_time, NOW())) as avg_time
+                ')
+                ->groupBy('date', 'page_url')
+                ->get();
+        
+            $data = $visits->map(function ($visit) {
+                return [
+                    'date' => $visit->date,
+                    'page_url' => $visit->page_url,
+                    'visits' => $visit->visits,
+                    'unique_visitors' => $visit->unique_visitors,
+                    'avg_time' => gmdate("H:i:s", round($visit->avg_time ?? 0)),
+                ];
+            });
+        
+            return response()->json($data);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Invalid date format. Please use YYYY-MM-DD format.',
+                'details' => $e->getMessage()
+            ], 422);
+        }
+        
     }
+
+    
+
 }
